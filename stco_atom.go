@@ -5,22 +5,53 @@ import "encoding/binary"
 import "errors"
 
 
-type STCOAtom struct {
+// I just cast everything to a CO64 atom for in-memory representation
+type CO64Atom struct {
   Header  AtomHeader
   ChunkOffsets []int64
 }
 
-func ParseSTCO( atom *Atom ) (STCOAtom, error) {
-  if atom.Header.Type != "stco"{
-    return STCOAtom{}, errors.New("Not an STCO atom")
+
+// Also handle CO64
+func ParseSTCO( atom *Atom ) (CO64Atom, error) {
+
+  // TODO:  Fix the DRY
+  if atom.Header.Type == "stco" {
+
+    num_entries := Uint32Decode( atom.Data[4:8] )
+
+    int32Offsets := make( []int32, num_entries )
+    buf := bytes.NewBuffer( atom.Data[8:] )
+    binary.Read( buf, binary.BigEndian, &int32Offsets)
+
+    stco := CO64Atom{ Header: atom.Header,
+                      ChunkOffsets: make([]int64, num_entries ) }
+
+    // Copy the int32s to int64s
+    // TODO:  I'm sure this isn't idiomatic
+    for i :=0; i < int(num_entries); i++ {
+      stco.ChunkOffsets[i] = int64( int32Offsets[i] )
+    }
+
+    return stco, nil
+
+
+  } else if atom.Header.Type == "co64" {
+
+
+    num_entries := Uint32Decode( atom.Data[4:8] )
+
+    stco := CO64Atom{ Header: atom.Header,
+                      ChunkOffsets: make([]int64, num_entries ) }
+
+    buf := bytes.NewBuffer( atom.Data[8:] )
+    binary.Read( buf, binary.BigEndian, &stco.ChunkOffsets)
+
+    return stco, nil
+
+  } else {
+    return CO64Atom{}, errors.New("Not an STCO atom")
   }
 
-  num_entries := Uint32Decode( atom.Data[4:8] )
 
-  stco := STCOAtom{ Header: atom.Header,
-                    ChunkOffsets: make([]int64, num_entries ) }
-  buf := bytes.NewBuffer( atom.Data[8:] )
-  binary.Read( buf, binary.BigEndian, &stco.ChunkOffsets)
-
-  return stco, nil
 }
