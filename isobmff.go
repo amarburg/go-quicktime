@@ -68,7 +68,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	////////////////////////////////////////////////////////////////////////
 
 	// MFHD [skip]
-	mfhd, err := ParseAtomHeader(moof.Buffer[AtomHeaderLength:])
+	mfhd, err := ParseAtomHeader(moof.Data[AtomHeaderLength:])
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	}
 
 	// TRAF
-	videoTraf, err := ParseAtomHeader(moof.Buffer[AtomHeaderLength+mfhd.Size:])
+	videoTraf, err := ParseAtomHeader(moof.Data[AtomHeaderLength+mfhd.Size:])
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	}
 
 	// TRAF->TFHD [skip]
-	videoTfhd, err := ParseAtomHeader(moof.Buffer[AtomHeaderLength+mfhd.Size+AtomHeaderLength:])
+	videoTfhd, err := ParseAtomHeader(moof.Data[AtomHeaderLength+mfhd.Size+AtomHeaderLength:])
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	}
 
 	// TRAF->TFDT [Base media decode time]
-	videoTfdt, err := ParseAtomHeader(moof.Buffer[AtomHeaderLength+mfhd.Size+AtomHeaderLength+videoTfhd.Size:])
+	videoTfdt, err := ParseAtomHeader(moof.Data[AtomHeaderLength+mfhd.Size+AtomHeaderLength+videoTfhd.Size:])
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 
 	var baseVideoMediaDecodeTime uint64
 	binary.Read(
-		bytes.NewReader(moof.Buffer[AtomHeaderLength+mfhd.Size+AtomHeaderLength+videoTfhd.Size+AtomHeaderLength+4:]),
+		bytes.NewReader(moof.Data[AtomHeaderLength+mfhd.Size+AtomHeaderLength+videoTfhd.Size+AtomHeaderLength+4:]),
 		binary.BigEndian,
 		&baseVideoMediaDecodeTime)
 
@@ -117,7 +117,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	////////////////////////////////////////////////////////////////////////
 
 	// MFHD [skip]
-	mfhd, err = ParseAtomHeader(moof.Buffer[AtomHeaderLength:])
+	mfhd, err = ParseAtomHeader(moof.Data[AtomHeaderLength:])
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	}
 
 	// TRAF [skip]
-	videoTraf, err = ParseAtomHeader(moof.Buffer[AtomHeaderLength+mfhd.Size:])
+	videoTraf, err = ParseAtomHeader(moof.Data[AtomHeaderLength+mfhd.Size:])
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	////////////////////////////////////////////////////////////////////////
 
 	// TRAF
-	audioTraf, err := ParseAtomHeader(moof.Buffer[AtomHeaderLength+mfhd.Size+videoTraf.Size:])
+	audioTraf, err := ParseAtomHeader(moof.Data[AtomHeaderLength+mfhd.Size+videoTraf.Size:])
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	}
 
 	// TRAF->TFHD [skip]
-	audioTfhd, err := ParseAtomHeader(moof.Buffer[AtomHeaderLength+mfhd.Size+videoTraf.Size+AtomHeaderLength:])
+	audioTfhd, err := ParseAtomHeader(moof.Data[AtomHeaderLength+mfhd.Size+videoTraf.Size+AtomHeaderLength:])
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 	}
 
 	// TRAF->TFDT [Base media decode time]
-	audioTfdt, err := ParseAtomHeader(moof.Buffer[AtomHeaderLength+mfhd.Size+videoTraf.Size+AtomHeaderLength+audioTfhd.Size:])
+	audioTfdt, err := ParseAtomHeader(moof.Data[AtomHeaderLength+mfhd.Size+videoTraf.Size+AtomHeaderLength+audioTfhd.Size:])
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func ReadIsoBmffMediaSegment(r io.Reader) (*IsoBmffMediaSegment, error) {
 
 	var baseAudioMediaDecodeTime uint64
 	binary.Read(
-		bytes.NewReader(moof.Buffer[AtomHeaderLength+mfhd.Size+videoTraf.Size+AtomHeaderLength+audioTfhd.Size+AtomHeaderLength+4:]),
+		bytes.NewReader(moof.Data[AtomHeaderLength+mfhd.Size+videoTraf.Size+AtomHeaderLength+audioTfhd.Size+AtomHeaderLength+4:]),
 		binary.BigEndian,
 		&baseAudioMediaDecodeTime)
 
@@ -213,10 +213,10 @@ func ReadIsoBmffMergedSegment(r io.Reader, prev *IsoBmffMergedSegment) (*IsoBmff
 	}
 
 	// Prepare for creating a buffer
-	ftyp := init.FTYP.Buffer
-	moov := init.MOOV.Buffer
-	moof := media.MOOF.Buffer
-	mdat := media.MDAT.Buffer
+	ftyp := init.FTYP.Data
+	moov := init.MOOV.Data
+	moof := media.MOOF.Data
+	mdat := media.MDAT.Data
 	size := len(ftyp) + len(moov) + len(moof) + len(mdat)
 	buffer := bytes.NewBuffer(make([]byte, 0, size))
 

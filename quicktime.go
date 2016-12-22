@@ -7,17 +7,10 @@ import (
 	"io"
 )
 
-const AtomHeaderLength = 8
-
-type AtomHeader struct {
-	Size     int
-	DataSize int
-	Type     string
-}
 
 type Atom struct {
 	Header AtomHeader
-	Buffer []byte
+	Data []byte
 }
 
 func ParseAtomHeader(buffer []byte) (AtomHeader, error) {
@@ -42,7 +35,10 @@ func ParseAtomHeader(buffer []byte) (AtomHeader, error) {
 	// Read atom type
 	atomType := string(buffer[4:8])
 
-	return AtomHeader{int(atomSize), int(atomSize) - AtomHeaderLength, atomType}, nil
+	return AtomHeader{Offset: 0,
+										Size: int(atomSize),
+										DataSize: int(atomSize) - AtomHeaderLength,
+										Type: atomType}, nil
 }
 
 func ParseAtomHeaderAt( r io.ReaderAt, offset int64 ) (AtomHeader, error) {
@@ -57,7 +53,9 @@ func ParseAtomHeaderAt( r io.ReaderAt, offset int64 ) (AtomHeader, error) {
 		return AtomHeader{}, errors.New("Couldn't read AtomHeaderLength")
 	}
 
-	return ParseAtomHeader( header_buf )
+	atom,err := ParseAtomHeader( header_buf )
+	atom.Offset = offset
+	return atom,err
 }
 
 func ReadAtom(r io.Reader) (*Atom, error) {
@@ -85,17 +83,18 @@ func ReadAtom(r io.Reader) (*Atom, error) {
 	return &atom, nil
 }
 
+func ReadAtomAt( r io.ReaderAt, header AtomHeader ) (*Atom,error) {
 
-
-
-
-func (header* AtomHeader) IsContainer() bool {
-	switch header.Type {
-	case "moov","trak","mdia","minf","stbl": return true;
-
+	buf := make([]byte, header.DataSize )
+	n,err := r.ReadAt( buf, header.Offset )
+	if err != nil || n != header.DataSize {
+		return nil, errors.New("Read incorrect number of bytes while getting Atom data")
 	}
-	return false;
+
+	return &Atom{ Header: header, Data: buf}, nil
 }
+
+
 
 // func main() {
 //
