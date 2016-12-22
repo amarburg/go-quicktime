@@ -16,33 +16,48 @@ type AtomHeader struct {
 }
 
 type Atom struct {
-	Header *AtomHeader
+	Header AtomHeader
 	Buffer []byte
 }
 
-func ParseAtomHeader(buffer []byte) (*AtomHeader, error) {
+func ParseAtomHeader(buffer []byte) (AtomHeader, error) {
 	if len(buffer) < AtomHeaderLength {
-		return nil, errors.New("Invalid buffer size")
+		return AtomHeader{}, errors.New("Invalid buffer size")
 	}
 
 	// Read atom size
 	var atomSize uint32
 	if err := binary.Read(bytes.NewReader(buffer), binary.BigEndian, &atomSize); err != nil {
-		return nil, err
+		return AtomHeader{}, err
 	}
 
 	if atomSize == 0 {
-		return nil, errors.New("Zero size not supported yet")
+		return AtomHeader{}, errors.New("Zero size not supported yet")
 	}
 
 	if atomSize == 1 {
-		return nil, errors.New("64 bit atom size not supported yet")
+		return AtomHeader{}, errors.New("64 bit atom size not supported yet")
 	}
 
 	// Read atom type
 	atomType := string(buffer[4:8])
 
-	return &AtomHeader{int(atomSize), int(atomSize) - AtomHeaderLength, atomType}, nil
+	return AtomHeader{int(atomSize), int(atomSize) - AtomHeaderLength, atomType}, nil
+}
+
+func ParseAtomHeaderAt( r io.ReaderAt, offset int64 ) (AtomHeader, error) {
+	header_buf := make([]byte, AtomHeaderLength )
+	n,err := r.ReadAt(header_buf, offset)
+
+	if err != nil {
+		return AtomHeader{}, err
+	}
+
+	if n != AtomHeaderLength {
+		return AtomHeader{}, errors.New("Couldn't read AtomHeaderLength")
+	}
+
+	return ParseAtomHeader( header_buf )
 }
 
 func ReadAtom(r io.Reader) (*Atom, error) {
@@ -65,9 +80,21 @@ func ReadAtom(r io.Reader) (*Atom, error) {
 	}
 
 	// Create atom
-	atom := &Atom{atomHeader, atomBuffer.Bytes()}
+	atom := Atom{atomHeader, atomBuffer.Bytes()}
 
-	return atom, nil
+	return &atom, nil
+}
+
+
+
+
+
+func (header* AtomHeader) IsContainer() bool {
+	switch header.Type {
+	case "moov","trak","mdia","minf","stbl": return true;
+
+	}
+	return false;
 }
 
 // func main() {
