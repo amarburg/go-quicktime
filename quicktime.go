@@ -86,7 +86,7 @@ func ReadAtom(r io.Reader) (*Atom, error) {
 func ReadAtomAt( r io.ReaderAt, header AtomHeader ) (*Atom,error) {
 
 	buf := make([]byte, header.DataSize )
-	n,err := r.ReadAt( buf, header.Offset )
+	n,err := r.ReadAt( buf, header.Offset + AtomHeaderLength )
 	if err != nil || n != header.DataSize {
 		return nil, errors.New("Read incorrect number of bytes while getting Atom data")
 	}

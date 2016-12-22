@@ -19,7 +19,7 @@ func Uint32Decode( data []byte ) (ret uint32) {
   return
 }
 
-func (header AtomHeader) ParseFTYP( atom Atom ) (FTYPAtom,error) {
+func ParseFTYP( atom *Atom ) (FTYPAtom,error) {
   if atom.Header.Type != "ftyp"{
     return FTYPAtom{}, errors.New("Not an FTYP atom")
   }
