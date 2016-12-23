@@ -10,7 +10,7 @@ func DumpTree( file io.ReaderAt, tree AtomArray ) {
   }
 }
 
-func PrintAtom( file io.ReaderAt, atom Atom, indent int ){
+func PrintAtom( file io.ReaderAt, atom *Atom, indent int ){
 
     for i := 0; i < indent; i++ { fmt.Printf("..") }
     fmt.Printf("%v  %v",atom.Type, atom.Size )

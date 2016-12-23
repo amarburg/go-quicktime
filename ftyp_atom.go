@@ -3,13 +3,13 @@ package quicktime
 import "errors"
 
 type FTYPAtom struct {
-  Atom      Atom
+  Atom      *Atom
   MajorBrand uint32
   MinorVersion uint32
 }
 
 
-func ParseFTYP( atom Atom ) (FTYPAtom,error) {
+func ParseFTYP( atom *Atom ) (FTYPAtom,error) {
   if atom.Type != "ftyp"{
     return FTYPAtom{}, errors.New("Not an FTYP atom")
   }

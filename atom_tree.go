@@ -3,12 +3,12 @@ package quicktime
 import "io"
 
 
-type AtomArray []Atom
+type AtomArray []*Atom
 
 // Functions for populating a tree of Atoms
 // TODO:   Eager loading of some Atoms while building tree
 func BuildTree( r io.ReaderAt, filesize int64 ) AtomArray {
-  root := make( []Atom, 0, 5 )
+  root := make( []*Atom, 0, 5 )
 
   var offset int64 = 0
   for {
@@ -23,7 +23,7 @@ func BuildTree( r io.ReaderAt, filesize int64 ) AtomArray {
     }
 
     offset += int64( header.Size )
-    root = append( root, header )
+    root = append( root, &header )
 
   }
   return root
@@ -44,7 +44,7 @@ func (atom* Atom) AddChildren( r io.ReaderAt, recursive bool ) {
 
       offset += int64(hdr.Size)
 
-      atom.Children = append( atom.Children, hdr )
+      atom.Children = append( atom.Children, &hdr )
 
     } else {
       break

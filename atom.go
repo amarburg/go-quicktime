@@ -14,7 +14,7 @@ type Atom struct {
 	DataSize int
 	Type     string
 
-  Children []Atom
+  Children []*Atom
   Data []byte
 }
 

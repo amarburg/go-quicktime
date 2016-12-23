@@ -3,17 +3,18 @@ package quicktime
 import "bytes"
 import "encoding/binary"
 import "errors"
+import "fmt"
 
 
 // I just cast everything to a CO64 atom for in-memory representation
 type CO64Atom struct {
-  Atom        Atom
+  Atom        *Atom
   ChunkOffsets []int64
 }
 
 
 // Also handle CO64
-func ParseSTCO( atom Atom ) (CO64Atom, error) {
+func ParseSTCO( atom *Atom ) (CO64Atom, error) {
 
   if !atom.HasData() {
     return CO64Atom{}, errors.New("STCO Atom doesn't have data")
@@ -56,6 +57,13 @@ func ParseSTCO( atom Atom ) (CO64Atom, error) {
   } else {
     return CO64Atom{}, errors.New("Not an STCO atom")
   }
+}
 
+// Remember that chunks are 1-base
+func (stco CO64Atom) ChunkOffset(chunk int) int64 {
+  if chunk < 1 || chunk > len(stco.ChunkOffsets) {
+    panic(fmt.Sprintf("Requested chunk",chunk,"in file wtih",len(stco.ChunkOffsets),"chunks"))
+  }
 
+  return stco.ChunkOffsets[chunk-1]
 }
