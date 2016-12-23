@@ -90,12 +90,3 @@ func (atom* Atom) LoadData( r io.ReaderAt ) (err error) {
 func (atom Atom) HasData() bool {
   return len( atom.Data ) > 0
 }
-
-func (atom Atom) FindChild( type_str string ) (*Atom) {
-  for _,child := range atom.Children {
-    if child.IsType( type_str ) {
-      return &child
-    }
-  }
-  return nil
-}

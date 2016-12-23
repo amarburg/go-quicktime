@@ -3,7 +3,7 @@ package quicktime
 import "io"
 import "fmt"
 
-func DumpTree( file io.ReaderAt, tree []Atom ) {
+func DumpTree( file io.ReaderAt, tree AtomArray ) {
   indent := 0
   for _,atom := range tree  {
     PrintAtom( file, atom, indent )
@@ -41,9 +41,7 @@ func PrintAtom( file io.ReaderAt, atom Atom, indent int ){
       }
     }
 
-
     fmt.Printf("\n")
-
 
     for _,child := range atom.Children  {
       PrintAtom( file, child, indent+1 )

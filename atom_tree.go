@@ -2,9 +2,12 @@ package quicktime
 
 import "io"
 
+
+type AtomArray []Atom
+
 // Functions for populating a tree of Atoms
 // TODO:   Eager loading of some Atoms while building tree
-func BuildTree( r io.ReaderAt, filesize int64 ) []Atom {
+func BuildTree( r io.ReaderAt, filesize int64 ) AtomArray {
   root := make( []Atom, 0, 5 )
 
   var offset int64 = 0
