@@ -6,17 +6,21 @@ import "errors"
 
 
 type STSZAtom struct {
-  Header  AtomHeader
+  Atom  Atom
   SampleSize int32
   SampleSizes []int32
 }
 
-func ParseSTSZ( atom *Atom ) (STSZAtom, error) {
-  if atom.Header.Type != "stsz"{
+func ParseSTSZ( atom Atom ) (STSZAtom, error) {
+  if atom.Type != "stsz"{
     return STSZAtom{}, errors.New("Not an STSZ atom")
   }
 
-  stsz := STSZAtom{ Header: atom.Header,
+  if !atom.HasData() {
+    return STSZAtom{}, errors.New("STSZ Atom doesn't have data")
+  }
+
+  stsz := STSZAtom{ Atom: atom,
                     SampleSize: Int32Decode( atom.Data[4:8] ),
                     SampleSizes: make( []int32, 0 )}
 

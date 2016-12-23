@@ -11,17 +11,21 @@ type STSCEntry struct {
 }
 
 type STSCAtom struct {
-  Header     AtomHeader
+  Atom     Atom
   Entries []STSCEntry
 }
 
-func ParseSTSC( atom *Atom ) (STSCAtom, error) {
-  if atom.Header.Type != "stsc"{
+func ParseSTSC( atom Atom ) (STSCAtom, error) {
+  if atom.Type != "stsc"{
     return STSCAtom{}, errors.New("Not an STSC atom")
   }
 
+  if !atom.HasData() {
+    return STSCAtom{}, errors.New("STSC atom doesn't have data")
+  }
+
   num_entries := Int32Decode( atom.Data[4:8])
-  stsc := STSCAtom{ Header: atom.Header,
+  stsc := STSCAtom{ Atom: atom,
                     Entries: make( []STSCEntry, num_entries ) }
 
   if( num_entries > 0 ) {
