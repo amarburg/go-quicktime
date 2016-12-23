@@ -2,7 +2,6 @@ package quicktime
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"io"
 )
@@ -11,51 +10,6 @@ import (
 type Atom struct {
 	Header AtomHeader
 	Data []byte
-}
-
-func ParseAtomHeader(buffer []byte) (AtomHeader, error) {
-	if len(buffer) < AtomHeaderLength {
-		return AtomHeader{}, errors.New("Invalid buffer size")
-	}
-
-	// Read atom size
-	var atomSize uint32
-	if err := binary.Read(bytes.NewReader(buffer), binary.BigEndian, &atomSize); err != nil {
-		return AtomHeader{}, err
-	}
-
-	if atomSize == 0 {
-		return AtomHeader{}, errors.New("Zero size not supported yet")
-	}
-
-	if atomSize == 1 {
-		return AtomHeader{}, errors.New("64 bit atom size not supported yet")
-	}
-
-	// Read atom type
-	atomType := string(buffer[4:8])
-
-	return AtomHeader{Offset: 0,
-										Size: int(atomSize),
-										DataSize: int(atomSize) - AtomHeaderLength,
-										Type: atomType}, nil
-}
-
-func ParseAtomHeaderAt( r io.ReaderAt, offset int64 ) (AtomHeader, error) {
-	header_buf := make([]byte, AtomHeaderLength )
-	n,err := r.ReadAt(header_buf, offset)
-
-	if err != nil {
-		return AtomHeader{}, err
-	}
-
-	if n != AtomHeaderLength {
-		return AtomHeader{}, errors.New("Couldn't read AtomHeaderLength")
-	}
-
-	atom,err := ParseAtomHeader( header_buf )
-	atom.Offset = offset
-	return atom,err
 }
 
 func ReadAtom(r io.Reader) (*Atom, error) {
@@ -93,6 +47,10 @@ func ReadAtomAt( r io.ReaderAt, header AtomHeader ) (*Atom,error) {
 
 	return &Atom{ Header: header, Data: buf}, nil
 }
+
+
+
+
 
 
 
