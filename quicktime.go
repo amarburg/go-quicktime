@@ -48,12 +48,6 @@ package quicktime
 // 	return &Atom{ Header: header, Data: buf}, nil
 // }
 
-
-
-
-
-
-
 // func main() {
 //
 // 	var init *IsoBmffInitSegment

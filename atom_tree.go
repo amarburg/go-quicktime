@@ -2,52 +2,90 @@ package quicktime
 
 import "io"
 
+import "fmt"
 
 type AtomArray []*Atom
 
 // Functions for populating a tree of Atoms
 // TODO:   Eager loading of some Atoms while building tree
-func BuildTree( r io.ReaderAt, filesize int64 ) AtomArray {
-  root := make( []*Atom, 0, 5 )
+func BuildTree(r io.ReaderAt, filesize int64) (AtomArray, error) {
+	root := make([]*Atom, 0, 5)
+	var err error = nil
 
-  var offset int64 = 0
-  for {
-    header,err := ParseAtomAt( r, offset )
+	var offset int64 = 0
+	for {
+		atom, err := ParseAtomAt(r, offset)
 
-    if err != nil {
-      break
-    }
+		if err != nil {
+			break
+		}
 
-    if header.IsContainer() {
-      header.AddChildren( r, true )
-    }
+		// Cheap eagerload...
+		if atom.Type == "moov" {
+			atom.LoadData(r)
+		}
 
-    offset += int64( header.Size )
-    root = append( root, &header )
+		if atom.IsContainer() {
+			if atom.HasData() {
+				atom.BuildChildren()
+			} else {
+				atom.ReadChildren(r)
+			}
+		}
 
-  }
-  return root
+		offset += int64(atom.Size)
+		root = append(root, &atom)
+
+	}
+	return root, err
 }
 
-func (atom* Atom) AddChildren( r io.ReaderAt, recursive bool ) {
-  var offset int64 = AtomLength
-  for offset < int64(atom.Size) {
-    loc := atom.Offset+offset
-    //fmt.Println("Looking for header at:",loc)
-    hdr,err := ParseAtomAt( r, loc )
+func (atom *Atom) ReadChildren(r io.ReaderAt) {
+	var offset int64 = AtomHeaderLength
+	for offset < int64(atom.Size) {
+		loc := atom.Offset + offset
+		//fmt.Println("Looking for header at:",loc)
+		hdr, err := ParseAtomAt(r, loc)
 
-    if err == nil {
-      //fmt.Println("Found header at",loc,":", hdr.Type)
-      if recursive && hdr.IsContainer() {
-       hdr.AddChildren(r, recursive)
-      }
+		if err == nil {
+			//fmt.Println("Found header at",loc,":", hdr.Type)
+			if hdr.IsContainer() {
+				hdr.ReadChildren(r)
+			}
 
-      offset += int64(hdr.Size)
+			offset += int64(hdr.Size)
 
-      atom.Children = append( atom.Children, &hdr )
+			atom.Children = append(atom.Children, &hdr)
 
-    } else {
-      break
-    }
-  }
+		} else {
+			break
+		}
+	}
+}
+
+// As above, but uses parent.Data rather than the reader
+func (atom *Atom) BuildChildren() {
+
+	var offset int64 = 0
+	for offset+AtomHeaderLength < int64(atom.Size) {
+		fmt.Println("Looking for header at:", offset)
+		hdr, err := ParseAtom(atom.Data[offset : offset+AtomHeaderLength])
+
+		if err == nil {
+			fmt.Println("Found header at", offset, ":", hdr.Type)
+			hdr.Data = atom.Data[offset+AtomHeaderLength : offset+int64(hdr.Size)]
+
+			if hdr.IsContainer() {
+				hdr.BuildChildren()
+			}
+
+			offset += int64(hdr.Size)
+
+			atom.Children = append(atom.Children, &hdr)
+
+		} else {
+			fmt.Println("Error parsing atom:", err.Error())
+			break
+		}
+	}
 }

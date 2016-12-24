@@ -5,33 +5,32 @@ import "encoding/binary"
 import "errors"
 import "io"
 
-const AtomLength = 8
-
+const AtomHeaderLength = 8
 
 type Atom struct {
-  Offset    int64
+	Offset   int64
 	Size     int
 	DataSize int
 	Type     string
 
-  Children []*Atom
-  Data []byte
+	Children []*Atom
+	Data     []byte
 }
 
-func (header* Atom) IsContainer() bool {
+func (header *Atom) IsContainer() bool {
 	switch header.Type {
-	case "moov","trak","mdia","minf","stbl","dinf": return true;
+	case "moov", "trak", "mdia", "minf", "stbl", "dinf":
+		return true
 	}
-	return false;
+	return false
 }
 
-func (header Atom) IsType( type_str string ) bool {
-  return header.Type == type_str
+func (header Atom) IsType(type_str string) bool {
+	return header.Type == type_str
 }
-
 
 func ParseAtom(buffer []byte) (Atom, error) {
-	if len(buffer) < AtomLength {
+	if len(buffer) < AtomHeaderLength {
 		return Atom{}, errors.New("Invalid buffer size")
 	}
 
@@ -53,40 +52,43 @@ func ParseAtom(buffer []byte) (Atom, error) {
 	atomType := string(buffer[4:8])
 
 	return Atom{Offset: 0,
-										Size: int(atomSize),
-										DataSize: int(atomSize) - AtomLength,
-										Type: atomType}, nil
+		Size:     int(atomSize),
+		DataSize: int(atomSize) - AtomHeaderLength,
+		Type:     atomType}, nil
 }
 
-func ParseAtomAt( r io.ReaderAt, offset int64 ) (Atom, error) {
-	header_buf := make([]byte, AtomLength )
-	n,err := r.ReadAt(header_buf, offset)
+func ParseAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
+	header_buf := make([]byte, AtomHeaderLength)
+	n, err := r.ReadAt(header_buf, offset)
 
 	if err != nil {
 		return Atom{}, err
 	}
 
-	if n != AtomLength {
-		return Atom{}, errors.New("Couldn't read AtomLength")
+	if n != AtomHeaderLength {
+		return Atom{}, errors.New("Couldn't read AtomHeaderLength")
 	}
 
-	atom,err := ParseAtom( header_buf )
+	atom, err := ParseAtom(header_buf)
 	atom.Offset = offset
-	return atom,err
+	return atom, err
 }
 
-func (atom* Atom) LoadData( r io.ReaderAt ) (err error) {
-  if atom.HasData() { return nil }
+// TODO:   Loading data should also populate Data in children
+func (atom *Atom) LoadData(r io.ReaderAt) (err error) {
+	if atom.HasData() {
+		return nil
+	}
 
-  buf := make([]byte, atom.DataSize )
-  n,err := r.ReadAt( buf, atom.Offset + AtomLength )
-  if err != nil || n != atom.DataSize {
-    return errors.New("Read incorrect number of bytes while getting Atom data")
-  }
-  atom.Data = buf
-  return nil
+	buf := make([]byte, atom.DataSize)
+	n, err := r.ReadAt(buf, atom.Offset+AtomHeaderLength)
+	if err != nil || n != atom.DataSize {
+		return errors.New("Read incorrect number of bytes while getting Atom data")
+	}
+	atom.Data = buf
+	return nil
 }
 
 func (atom Atom) HasData() bool {
-  return len( atom.Data ) > 0
+	return len(atom.Data) > 0
 }
