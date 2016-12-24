@@ -39,6 +39,11 @@ func PrintAtom( file io.ReaderAt, atom *Atom, indent int ){
       for _,e := range stsz.Entries  {
         fmt.Printf(" (%d,%d,%d) ", e.FirstChunk, e.SamplesPerChunk, e.SampleId )
       }
+    case "tkhd":
+      atom.LoadData( file )
+      tkhd,_ := ParseTKHD( atom )
+
+      fmt.Printf(" (w: %.4f, h: %.4f)", tkhd.Width, tkhd.Height)
     }
 
     fmt.Printf("\n")
