@@ -20,6 +20,7 @@ func PrintAtom(atom *Atom, indent int) {
 	if atom.HasData() { star = "*" }
 	fmt.Printf("%v%s  %v", atom.Type, star, atom.Size)
 
+	// Atom-specific debug output
 	if atom.HasData() {
 		switch atom.Type {
 		case "ftyp":
