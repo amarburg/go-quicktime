@@ -5,24 +5,43 @@ import "io"
 import "fmt"
 
 type AtomArray []*Atom
+type StringList []string
+
+type BuildTreeConfig struct {
+	EagerloadTypes StringList
+}
+
+func (list StringList) Includes( val string  ) bool {
+	for _,str := range list {
+		if str == val { return true }
+	}
+	return false
+}
+
 
 // Functions for populating a tree of Atoms
 // TODO:   Eager loading of some Atoms while building tree
-func BuildTree(r io.ReaderAt, filesize int64) (AtomArray, error) {
+func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) ) (AtomArray, error) {
+
+	// Call configuration Functions
+	config := BuildTreeConfig{}
+	for _,opt := range options { opt(&config) }
+
+
 	root := make([]*Atom, 0, 5)
 	var err error = nil
 
 	var offset int64 = 0
 	for {
-		atom, err := ParseAtomAt(r, offset)
+		atom, err := ReadAtomAt(r, offset)
 
 		if err != nil {
 			break
 		}
 
-		// Cheap eagerload...
-		if atom.Type == "moov" {
-			atom.LoadData(r)
+		//  eagerload...
+		if config.EagerloadTypes.Includes( atom.Type ) {
+		 	atom.ReadData(r)
 		}
 
 		if atom.IsContainer() {
@@ -45,7 +64,7 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 	for offset < int64(atom.Size) {
 		loc := atom.Offset + offset
 		//fmt.Println("Looking for header at:",loc)
-		hdr, err := ParseAtomAt(r, loc)
+		hdr, err := ReadAtomAt(r, loc)
 
 		if err == nil {
 			//fmt.Println("Found header at",loc,":", hdr.Type)

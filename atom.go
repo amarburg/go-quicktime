@@ -57,7 +57,7 @@ func ParseAtom(buffer []byte) (Atom, error) {
 		Type:     atomType}, nil
 }
 
-func ParseAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
+func ReadAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
 	header_buf := make([]byte, AtomHeaderLength)
 	n, err := r.ReadAt(header_buf, offset)
 
@@ -75,7 +75,7 @@ func ParseAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
 }
 
 // TODO:   Loading data should also populate Data in children
-func (atom *Atom) LoadData(r io.ReaderAt) (err error) {
+func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 	if atom.HasData() {
 		return nil
 	}
@@ -86,8 +86,24 @@ func (atom *Atom) LoadData(r io.ReaderAt) (err error) {
 		return errors.New("Read incorrect number of bytes while getting Atom data")
 	}
 	atom.Data = buf
+
+	for _,child := range atom.Children {
+		child.SetData( buf[ child.Offset - atom.Offset - AtomHeaderLength:] )
+	}
+
 	return nil
 }
+
+// As above but loads from a buffer.  Buffer starts _after parent's header_
+// e.g. buf[0:1] is _this atom's_ type
+func (atom *Atom) SetData(buf []byte) {
+	atom.Data = buf[ AtomHeaderLength:atom.Size ]
+
+	for _,child := range atom.Children {
+		child.SetData( buf[ child.Offset - atom.Offset:] )
+	}
+}
+
 
 func (atom Atom) HasData() bool {
 	return len(atom.Data) > 0

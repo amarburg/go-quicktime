@@ -3,6 +3,7 @@ package quicktime
 import "fmt"
 
 func DumpTree(tree AtomArray) {
+	fmt.Println(" (* = has loaded contents)")
 	indent := 0
 	for _, atom := range tree {
 		PrintAtom(atom, indent)
@@ -14,7 +15,10 @@ func PrintAtom(atom *Atom, indent int) {
 	for i := 0; i < indent; i++ {
 		fmt.Printf("..")
 	}
-	fmt.Printf("%v  %v", atom.Type, atom.Size)
+
+	star := " "
+	if atom.HasData() { star = "*" }
+	fmt.Printf("%v%s  %v", atom.Type, star, atom.Size)
 
 	if atom.HasData() {
 		switch atom.Type {
