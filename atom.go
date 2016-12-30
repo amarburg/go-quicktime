@@ -111,7 +111,7 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 // If the Atom has children, it will set the data for the Children (recursively).
 func (atom *Atom) SetData(buf []byte) {
 	// TODO.   Check buf is atom.Size
-	if( len(buf) < atom.Size ) return
+	if( len(buf) < atom.Size ) { return }
 	
 	atom.Data = buf[ AtomHeaderLength:atom.Size ]
 
