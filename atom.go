@@ -5,8 +5,13 @@ import "encoding/binary"
 import "errors"
 import "io"
 
+// AtomHeaderLength is the length of a standard Atom header in bytes: a 4 byte atom size, and a 4 byte atom type.
 const AtomHeaderLength = 8
 
+// The Atom struct stores a generic (not-decoded) Atom, including its type, 
+// size and optionally its Children and Data as a slice of the original byte buffer.
+// If read from an io.ReaderAt it will also store the offset of the atom within the file 
+// (see ReadAtomAt)
 type Atom struct {
 	Offset   int64
 	Size     int
@@ -17,6 +22,7 @@ type Atom struct {
 	Data     []byte
 }
 
+// IsContainer returns true if a given atom type is a container, rather than a leaf.  This is done using a switch ... if I've missed an atom, send me a pull request!
 func (header *Atom) IsContainer() bool {
 	switch header.Type {
 	case "moov", "trak", "mdia", "minf", "stbl", "dinf":
@@ -25,10 +31,13 @@ func (header *Atom) IsContainer() bool {
 	return false
 }
 
+// IsType returns true if the Atom's type matches the argument.
 func (header Atom) IsType(type_str string) bool {
 	return header.Type == type_str
 }
 
+// ParseAtom reads the first 8 bytes of the buffer and returns the appropriate Atom.   
+// Note this function doesn't set Data or Children for the Atom -- see ReadData and BuildChildren.
 func ParseAtom(buffer []byte) (Atom, error) {
 	if len(buffer) < AtomHeaderLength {
 		return Atom{}, errors.New("Invalid buffer size")
@@ -57,6 +66,7 @@ func ParseAtom(buffer []byte) (Atom, error) {
 		Type:     atomType}, nil
 }
 
+// ReadAtom reads the atom header from an io.ReaderAt and produces an Atom.
 func ReadAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
 	header_buf := make([]byte, AtomHeaderLength)
 	n, err := r.ReadAt(header_buf, offset)
@@ -74,7 +84,9 @@ func ReadAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
 	return atom, err
 }
 
-// TODO:   Loading data should also populate Data in children
+// ReadData populates the Atom's Data member from the reader.   Assumes it is the same reader
+// used to populated the original Atom.
+// If Atom.Children is set, it also sets the Data for its children (recursively).
 func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 	if atom.HasData() {
 		return nil
@@ -94,9 +106,13 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 	return nil
 }
 
-// As above but loads from a buffer.  Buffer starts _after parent's header_
-// e.g. buf[0:1] is _this atom's_ type
+// SetData sets the atom's Data field from the byte slice.   The slice must start
+// at the beginning of this atom's header.
+// If the Atom has children, it will set the data for the Children (recursively).
 func (atom *Atom) SetData(buf []byte) {
+	// TODO.   Check buf is atom.Size
+	if( len(buf) < atom.Size ) return
+	
 	atom.Data = buf[ AtomHeaderLength:atom.Size ]
 
 	for _,child := range atom.Children {
@@ -104,7 +120,7 @@ func (atom *Atom) SetData(buf []byte) {
 	}
 }
 
-
+// HasData is true if the Data field is set for the atom
 func (atom Atom) HasData() bool {
 	return len(atom.Data) > 0
 }
