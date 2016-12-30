@@ -1,16 +1,21 @@
 package quicktime
 
 import "io"
-
 import "fmt"
 
+// AtomArray is used to store the topmost level when building the atom tree ... there is no master top-level Atom in Quicktime.
 type AtomArray []*Atom
+
+// StringList stores a slice of Strings for BuildTreeConfig
 type StringList []string
 
+// BuildTreeConfig stores parameters for the BuildTree function.
 type BuildTreeConfig struct {
+	// List of Atom types which should be eager-loaded while building the tree.
 	EagerloadTypes StringList
 }
 
+// Tests if a string occurs in a StringList.
 func (list StringList) Includes( val string  ) bool {
 	for _,str := range list {
 		if str == val { return true }
@@ -19,14 +24,16 @@ func (list StringList) Includes( val string  ) bool {
 }
 
 
-// Functions for populating a tree of Atoms
-// TODO:   Eager loading of some Atoms while building tree
+// BuildTree builds a tree of Atoms from an io.ReaderAt.   Rather than check for EOF, requires
+// the io length to be pre-determined.   Takes a list of configuration closures, each of which 
+// is passed the BuildTreeConfig.
+// Returns the top-level AtomArray.   On an error, this AtomArray will contain atoms up to the
+// error.
 func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) ) (AtomArray, error) {
 
 	// Call configuration Functions
 	config := BuildTreeConfig{}
 	for _,opt := range options { opt(&config) }
-
 
 	root := make([]*Atom, 0, 5)
 	var err error = nil
@@ -59,6 +66,7 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 	return root, err
 }
 
+// ReadChildren adds children to an Atom by reading from a ReaderAt.
 func (atom *Atom) ReadChildren(r io.ReaderAt) {
 	var offset int64 = AtomHeaderLength
 	for offset < int64(atom.Size) {
@@ -82,7 +90,8 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 	}
 }
 
-// As above, but uses parent.Data rather than the reader
+// BuildChildren adds children to an Atom after its data has been loaded.
+// If the Atom already has children, behavior is undetermined.
 func (atom *Atom) BuildChildren() {
 
 	var offset int64 = 0
