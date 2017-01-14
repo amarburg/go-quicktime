@@ -54,6 +54,7 @@ func ParseAtom(buffer []byte) (Atom, error) {
 	}
 
 	if atomSize == 1 {
+		//bytes 8-15   atom size (including 16-byte size and type preamble)
 		return Atom{}, errors.New("64 bit atom size not supported yet")
 	}
 

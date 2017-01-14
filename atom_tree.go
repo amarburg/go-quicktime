@@ -25,7 +25,7 @@ func (list StringList) Includes( val string  ) bool {
 
 
 // BuildTree builds a tree of Atoms from an io.ReaderAt.   Rather than check for EOF, requires
-// the io length to be pre-determined.   Takes a list of configuration closures, each of which 
+// the io length to be pre-determined.   Takes a list of configuration closures, each of which
 // is passed the BuildTreeConfig.
 // Returns the top-level AtomArray.   On an error, this AtomArray will contain atoms up to the
 // error.
@@ -40,10 +40,12 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 
 	var offset int64 = 0
 	for {
+		fmt.Printf("Reading at %d\n", offset)
 		atom, err := ReadAtomAt(r, offset)
 
 		if err != nil {
-			break
+			fmt.Println(err)
+			return root, err
 		}
 
 		//  eagerload...
@@ -96,11 +98,11 @@ func (atom *Atom) BuildChildren() {
 
 	var offset int64 = 0
 	for offset+AtomHeaderLength < int64(atom.Size) {
-		fmt.Println("Looking for header at:", offset)
+		//fmt.Println("Looking for header at:", offset)
 		hdr, err := ParseAtom(atom.Data[offset : offset+AtomHeaderLength])
 
 		if err == nil {
-			fmt.Println("Found header at", offset, ":", hdr.Type)
+			//fmt.Println("Found header at", offset, ":", hdr.Type)
 			hdr.Data = atom.Data[offset+AtomHeaderLength : offset+int64(hdr.Size)]
 
 			if hdr.IsContainer() {
