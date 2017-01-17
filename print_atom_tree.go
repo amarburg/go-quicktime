@@ -27,7 +27,7 @@ func PrintAtom(atom *Atom, indent int) {
 			ftyp, _ := ParseFTYP(atom)
 
 			fmt.Printf(" (%08x %08x) ", ftyp.MajorBrand, ftyp.MinorVersion)
-		case "stco":
+		case "stco", "co64":
 			stco, _ := ParseSTCO(atom)
 
 			fmt.Printf(" (%d entries) ", len(stco.ChunkOffsets))

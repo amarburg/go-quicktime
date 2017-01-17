@@ -25,7 +25,7 @@ func ParseSTBL(atom *Atom) (STBLAtom, error) {
 		switch child.Type {
 		case "stsc":
 			stbl.Stsc, _ = ParseSTSC(child)
-		case "stco":
+		case "stco", "co64":
 			stbl.Stco, _ = ParseSTCO(child)
 		case "stsz":
 			stbl.Stsz, _ = ParseSTSZ(child)

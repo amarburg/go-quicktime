@@ -40,13 +40,20 @@ func ParseSTCO(atom *Atom) (CO64Atom, error) {
 
 	} else if atom.Type == "co64" {
 
-		num_entries := Uint32Decode(atom.Data[4:8])
+		numEntries := Uint32Decode(atom.Data[4:8])
+//fmt.Printf("co64 has %d entries\n", numEntries )
 
 		stco := CO64Atom{Atom: atom,
-			ChunkOffsets: make([]int64, num_entries)}
+										ChunkOffsets: make([]int64, numEntries, numEntries) }
 
 		buf := bytes.NewBuffer(atom.Data[8:])
-		binary.Read(buf, binary.BigEndian, &stco.ChunkOffsets)
+		for i := 0; i < int(numEntries); i++ {
+			binary.Read(buf, binary.BigEndian, &stco.ChunkOffsets[i])
+		}
+
+		if len(stco.ChunkOffsets) != int(numEntries) {
+			panic(fmt.Sprintf("Unexpected state: len(stco.ChunkOffsets) != numEntries, %d != %d",len(stco.ChunkOffsets),numEntries))
+		}
 
 		return stco, nil
 
@@ -58,7 +65,7 @@ func ParseSTCO(atom *Atom) (CO64Atom, error) {
 // Remember that chunks are 1-base
 func (stco CO64Atom) ChunkOffset(chunk int) int64 {
 	if chunk < 1 || chunk > len(stco.ChunkOffsets) {
-		panic(fmt.Sprintf("Requested chunk", chunk, "in file wtih", len(stco.ChunkOffsets), "chunks"))
+		panic(fmt.Sprintf("Requested chunk %d in file with %d chunks", chunk, len(stco.ChunkOffsets)))
 	}
 
 	return stco.ChunkOffsets[chunk-1]
