@@ -22,7 +22,7 @@ type Atom struct {
 	IsExt			bool
 
 	Children []*Atom
-	Data     []byte
+	Data     []byte  `json:"-"`
 }
 
 func (header *Atom) HeaderLength() int64 {
