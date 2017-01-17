@@ -50,6 +50,7 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 
 		//  eagerload...
 		if config.EagerloadTypes.Includes( atom.Type ) {
+			fmt.Printf("Found atom %s, eagerloading...\n", atom.Type )
 		 	atom.ReadData(r)
 		}
 
@@ -70,25 +71,25 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 
 // ReadChildren adds children to an Atom by reading from a ReaderAt.
 func (atom *Atom) ReadChildren(r io.ReaderAt) {
-	var offset int64 = AtomHeaderLength
+	var offset int64 = atom.HeaderLength()
 	for offset < int64(atom.Size) {
 		loc := atom.Offset + offset
 		//fmt.Println("Looking for header at:",loc)
 		hdr, err := ReadAtomAt(r, loc)
 
-		if err == nil {
-			//fmt.Println("Found header at",loc,":", hdr.Type)
-			if hdr.IsContainer() {
-				hdr.ReadChildren(r)
-			}
-
-			offset += int64(hdr.Size)
-
-			atom.Children = append(atom.Children, &hdr)
-
-		} else {
+		if err != nil {
 			break
 		}
+
+		fmt.Printf("Found header at %d: %s\n", hdr,offset, hdr.Type)
+		if hdr.IsContainer() {
+			hdr.ReadChildren(r)
+		}
+
+		offset += int64(hdr.Size)
+
+		atom.Children = append(atom.Children, &hdr)
+
 	}
 }
 
