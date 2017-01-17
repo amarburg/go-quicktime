@@ -97,13 +97,13 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 func (atom *Atom) BuildChildren() {
 
 	var offset int64 = 0
-	for offset+AtomHeaderLength < int64(atom.Size) {
+	for offset+atom.HeaderLength() < int64(atom.Size) {
 		//fmt.Println("Looking for header at:", offset)
-		hdr, err := ParseAtom(atom.Data[offset : offset+AtomHeaderLength])
+		hdr, err := ParseAtom(atom.Data[offset : offset+atom.HeaderLength()])
 
 		if err == nil {
 			//fmt.Println("Found header at", offset, ":", hdr.Type)
-			hdr.Data = atom.Data[offset+AtomHeaderLength : offset+int64(hdr.Size)]
+			hdr.Data = atom.Data[offset+atom.HeaderLength() : offset+int64(hdr.Size)]
 
 			if hdr.IsContainer() {
 				hdr.BuildChildren()
