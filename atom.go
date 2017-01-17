@@ -120,14 +120,17 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 	}
 
 	buf := make([]byte, atom.DataSize)
-	n, err := r.ReadAt(buf, atom.Offset+AtomHeaderLength)
-	if err != nil || int64(n) != atom.DataSize {
-		return errors.New("Read incorrect number of bytes while getting Atom data")
+	dataOffset := atom.Offset + atom.HeaderLength()
+	n, err := r.ReadAt( buf, dataOffset  )
+	if err != nil && err.Error() != "EOF" {
+		return err
+	} else if int64(n) != atom.DataSize {
+		return errors.New(fmt.Sprintf("Read incorrect number of bytes while getting Atom data %d != %d", n, atom.DataSize))
 	}
 	atom.Data = buf
 
 	for _,child := range atom.Children {
-		child.SetData( buf[ child.Offset - atom.Offset - AtomHeaderLength:] )
+		child.SetData( buf[ child.Offset - dataOffset:] )
 	}
 
 	return nil
@@ -140,7 +143,7 @@ func (atom *Atom) SetData(buf []byte) {
 	// TODO.   Check buf is atom.Size
 	if( int64(len(buf)) < atom.Size ) { return }
 
-	atom.Data = buf[ AtomHeaderLength:atom.Size ]
+	atom.Data = buf[ atom.HeaderLength():atom.Size ]
 
 	for _,child := range atom.Children {
 		child.SetData( buf[ child.Offset - atom.Offset:] )

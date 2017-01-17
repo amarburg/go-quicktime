@@ -35,11 +35,11 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 	config := BuildTreeConfig{}
 	for _,opt := range options { opt(&config) }
 
-	root := make([]*Atom, 0, 5)
+	root := make([]*Atom,0)
 	var err error = nil
 
 	var offset int64 = 0
-	for {
+	for offset < filesize {
 		fmt.Printf("Reading at %d\n", offset)
 		atom, err := ReadAtomAt(r, offset)
 
@@ -51,7 +51,11 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 		//  eagerload...
 		if config.EagerloadTypes.Includes( atom.Type ) {
 			fmt.Printf("Found atom %s, eagerloading...\n", atom.Type )
-		 	atom.ReadData(r)
+		 	err := atom.ReadData(r)
+
+			if err != nil {
+				fmt.Printf("Error while eagerloading atom \"%s\": %s\n", atom.Type, err.Error())
+			}
 		}
 
 		if atom.IsContainer() {
@@ -62,8 +66,8 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 			}
 		}
 
-		offset += int64(atom.Size)
 		root = append(root, &atom)
+		offset += int64(atom.Size)
 
 	}
 	return root, err
@@ -81,7 +85,7 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 			break
 		}
 
-		fmt.Printf("Found header at %d: %s\n", hdr,offset, hdr.Type)
+		fmt.Printf("ReadChildren: Found header at %d: %s\n", offset, hdr.Type)
 		if hdr.IsContainer() {
 			hdr.ReadChildren(r)
 		}
@@ -103,7 +107,7 @@ func (atom *Atom) BuildChildren() {
 		hdr, err := ParseAtom(atom.Data[offset : offset+atom.HeaderLength()])
 
 		if err == nil {
-			//fmt.Println("Found header at", offset, ":", hdr.Type)
+			fmt.Printf("BuildChildren: Found header at %d: %s\n", offset, hdr.Type)
 			hdr.Data = atom.Data[offset+atom.HeaderLength() : offset+int64(hdr.Size)]
 
 			if hdr.IsContainer() {
