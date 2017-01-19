@@ -1,7 +1,7 @@
 # go-quicktime
 
 [![GoDoc](https://godoc.org/github.com/amarburg/go-quicktime?status.svg)](https://godoc.org/github.com/amarburg/go-quicktime)
-[![Travis CI](https://travis-ci.org/amarburg/go-quicktime.svg?branch=master)](https://travis-ci.org/amarburg/go-quicktime)
+[![wercker status](https://app.wercker.com/status/6a3ea4d08d325030c0988bd0f099e563/s/master "wercker status")](https://app.wercker.com/project/byKey/6a3ea4d08d325030c0988bd0f099e563)
 
 quicktime is a simple Quicktime container parser written in Go.
 
