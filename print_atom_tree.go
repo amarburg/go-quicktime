@@ -44,8 +44,11 @@ func PrintAtom(atom *Atom, indent int) {
 			}
 		case "tkhd":
 			tkhd, _ := ParseTKHD(atom)
-
 			fmt.Printf(" (w: %.4f, h: %.4f)", tkhd.Width, tkhd.Height)
+		case "mvhd":
+			mvhd,_ := ParseMVHD(atom)
+			seconds := float32(mvhd.TimeTicks) / float32(mvhd.TimeScale )
+			fmt.Printf(" scale: %d, duration: %d (%.4f sec)", mvhd.TimeScale, mvhd.TimeTicks, seconds )
 		}
 	}
 

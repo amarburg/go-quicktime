@@ -85,7 +85,7 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 			break
 		}
 
-		fmt.Printf("ReadChildren: Found header at %d: %s\n", offset, hdr.Type)
+		//fmt.Printf("ReadChildren: Found header at %d: %s\n", offset, hdr.Type)
 		if hdr.IsContainer() {
 			hdr.ReadChildren(r)
 		}
@@ -107,7 +107,7 @@ func (atom *Atom) BuildChildren() {
 		hdr, err := ParseAtom(atom.Data[offset : offset+atom.HeaderLength()])
 
 		if err == nil {
-			fmt.Printf("BuildChildren: Found header at %d: %s\n", offset, hdr.Type)
+			//fmt.Printf("BuildChildren: Found header at %d: %s\n", offset, hdr.Type)
 			hdr.Data = atom.Data[offset+atom.HeaderLength() : offset+int64(hdr.Size)]
 
 			if hdr.IsContainer() {
