@@ -42,10 +42,14 @@ func (stbl STBLAtom) SampleOffset(sample int) (int64, error) {
 	}
 
 	// Use STCO to determine which chunk it's in
-	chunk, chunk_start, _ := stbl.Stsc.SampleChunk(sample)
+	chunk, chunk_start, _, err := stbl.Stsc.SampleChunk(sample)
 	if chunk < 0 {
 		panic(fmt.Sprintln("Couldn't determine which chunk", sample, "is in"))
+	} else if err != nil {
+		panic(fmt.Sprintln("Error determining chunk: %s", err.Error()))
 	}
+
+	//fmt.Printf("STBL: Believe sample %d is number %d in chunk %d which starts with sample %d\n", sample, remainder, chunk, chunk_start)
 
 	offset := stbl.Stco.ChunkOffset(chunk)
 	for i := chunk_start; i < sample; i++ {

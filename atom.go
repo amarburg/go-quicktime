@@ -19,10 +19,10 @@ type Atom struct {
 	Size     int64
 	DataSize int64
 	Type     string
-	IsExt			bool
+	IsExt    bool
 
 	Children []*Atom
-	Data     []byte  `json:"-"`
+	Data     []byte `json:"-"`
 }
 
 func (header *Atom) HeaderLength() int64 {
@@ -32,7 +32,6 @@ func (header *Atom) HeaderLength() int64 {
 		return AtomHeaderLength
 	}
 }
-
 
 // IsContainer returns true if a given atom type is a container, rather than a leaf.  This is done using a switch ... if I've missed an atom, send me a pull request!
 func (header *Atom) IsContainer() bool {
@@ -56,8 +55,8 @@ func ParseAtom(buffer []byte) (Atom, error) {
 	}
 
 	atom := Atom{Offset: 0,
-		IsExt:    false,
-	 	Type:     string(buffer[4:8])}
+		IsExt: false,
+		Type:  string(buffer[4:8])}
 
 	// Read atom size
 	var size32 int32
@@ -65,7 +64,7 @@ func ParseAtom(buffer []byte) (Atom, error) {
 		return Atom{}, err
 	}
 
-	atom.Size = int64( size32 )
+	atom.Size = int64(size32)
 
 	if atom.Size == 0 {
 		return atom, errors.New("Zero size not supported yet")
@@ -76,7 +75,6 @@ func ParseAtom(buffer []byte) (Atom, error) {
 		if len(buffer) < ExtendedHeaderLength {
 			return Atom{}, errors.New("Got an extended-length header, but not enough data provided")
 		}
-
 
 		atom.IsExt = true
 
@@ -103,7 +101,7 @@ func ReadAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
 	}
 
 	if n != ExtendedHeaderLength {
-		return Atom{}, errors.New( fmt.Sprintf("Couldn't read ExtendedHeaderLength bytes at offset %d, read %d bytes",offset, n))
+		return Atom{}, errors.New(fmt.Sprintf("Couldn't read ExtendedHeaderLength bytes at offset %d, read %d bytes", offset, n))
 	}
 
 	atom, err := ParseAtom(header_buf)
@@ -121,7 +119,7 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 
 	buf := make([]byte, atom.DataSize)
 	dataOffset := atom.Offset + atom.HeaderLength()
-	n, err := r.ReadAt( buf, dataOffset  )
+	n, err := r.ReadAt(buf, dataOffset)
 	if err != nil && err.Error() != "EOF" {
 		return err
 	} else if int64(n) != atom.DataSize {
@@ -129,8 +127,8 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 	}
 	atom.Data = buf
 
-	for _,child := range atom.Children {
-		child.SetData( buf[ child.Offset - dataOffset:] )
+	for _, child := range atom.Children {
+		child.SetData(buf[child.Offset-dataOffset:])
 	}
 
 	return nil
@@ -141,12 +139,14 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 // If the Atom has children, it will set the data for the Children (recursively).
 func (atom *Atom) SetData(buf []byte) {
 	// TODO.   Check buf is atom.Size
-	if( int64(len(buf)) < atom.Size ) { return }
+	if int64(len(buf)) < atom.Size {
+		return
+	}
 
-	atom.Data = buf[ atom.HeaderLength():atom.Size ]
+	atom.Data = buf[atom.HeaderLength():atom.Size]
 
-	for _,child := range atom.Children {
-		child.SetData( buf[ child.Offset - atom.Offset:] )
+	for _, child := range atom.Children {
+		child.SetData(buf[child.Offset-atom.Offset:])
 	}
 }
 

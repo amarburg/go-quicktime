@@ -41,10 +41,10 @@ func ParseSTCO(atom *Atom) (CO64Atom, error) {
 	} else if atom.Type == "co64" {
 
 		numEntries := Uint32Decode(atom.Data[4:8])
-//fmt.Printf("co64 has %d entries\n", numEntries )
+		//fmt.Printf("co64 has %d entries\n", numEntries )
 
 		stco := CO64Atom{Atom: atom,
-										ChunkOffsets: make([]int64, numEntries, numEntries) }
+			ChunkOffsets: make([]int64, numEntries, numEntries)}
 
 		buf := bytes.NewBuffer(atom.Data[8:])
 		for i := 0; i < int(numEntries); i++ {
@@ -52,7 +52,7 @@ func ParseSTCO(atom *Atom) (CO64Atom, error) {
 		}
 
 		if len(stco.ChunkOffsets) != int(numEntries) {
-			panic(fmt.Sprintf("Unexpected state: len(stco.ChunkOffsets) != numEntries, %d != %d",len(stco.ChunkOffsets),numEntries))
+			panic(fmt.Sprintf("Unexpected state: len(stco.ChunkOffsets) != numEntries, %d != %d", len(stco.ChunkOffsets), numEntries))
 		}
 
 		return stco, nil

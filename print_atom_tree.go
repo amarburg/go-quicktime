@@ -17,7 +17,9 @@ func PrintAtom(atom *Atom, indent int) {
 	}
 
 	star := " "
-	if atom.HasData() { star = "*" }
+	if atom.HasData() {
+		star = "*"
+	}
 	fmt.Printf("%v%s  %v", atom.Type, star, atom.Size)
 
 	// Atom-specific debug output
@@ -46,9 +48,9 @@ func PrintAtom(atom *Atom, indent int) {
 			tkhd, _ := ParseTKHD(atom)
 			fmt.Printf(" (w: %.4f, h: %.4f)", tkhd.Width, tkhd.Height)
 		case "mvhd":
-			mvhd,_ := ParseMVHD(atom)
-			seconds := float32(mvhd.TimeTicks) / float32(mvhd.TimeScale )
-			fmt.Printf(" scale: %d, duration: %d (%.4f sec)", mvhd.TimeScale, mvhd.TimeTicks, seconds )
+			mvhd, _ := ParseMVHD(atom)
+			seconds := float32(mvhd.TimeTicks) / float32(mvhd.TimeScale)
+			fmt.Printf(" scale: %d, duration: %d (%.4f sec)", mvhd.TimeScale, mvhd.TimeTicks, seconds)
 		}
 	}
 

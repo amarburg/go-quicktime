@@ -16,26 +16,29 @@ type BuildTreeConfig struct {
 }
 
 // Tests if a string occurs in a StringList.
-func (list StringList) Includes( val string  ) bool {
-	for _,str := range list {
-		if str == val { return true }
+func (list StringList) Includes(val string) bool {
+	for _, str := range list {
+		if str == val {
+			return true
+		}
 	}
 	return false
 }
-
 
 // BuildTree builds a tree of Atoms from an io.ReaderAt.   Rather than check for EOF, requires
 // the io length to be pre-determined.   Takes a list of configuration closures, each of which
 // is passed the BuildTreeConfig.
 // Returns the top-level AtomArray.   On an error, this AtomArray will contain atoms up to the
 // error.
-func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) ) (AtomArray, error) {
+func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig)) (AtomArray, error) {
 
 	// Call configuration Functions
 	config := BuildTreeConfig{}
-	for _,opt := range options { opt(&config) }
+	for _, opt := range options {
+		opt(&config)
+	}
 
-	root := make([]*Atom,0)
+	root := make([]*Atom, 0)
 	var err error = nil
 
 	var offset int64 = 0
@@ -49,9 +52,9 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig) 
 		}
 
 		//  eagerload...
-		if config.EagerloadTypes.Includes( atom.Type ) {
-			fmt.Printf("Found atom %s, eagerloading...\n", atom.Type )
-		 	err := atom.ReadData(r)
+		if config.EagerloadTypes.Includes(atom.Type) {
+			fmt.Printf("Found atom %s, eagerloading...\n", atom.Type)
+			err := atom.ReadData(r)
 
 			if err != nil {
 				fmt.Printf("Error while eagerloading atom \"%s\": %s\n", atom.Type, err.Error())
