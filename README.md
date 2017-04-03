@@ -1,5 +1,6 @@
 # go-quicktime
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3372baadfefe4b77b53eb7b44a18e7a9)](https://www.codacy.com/app/amarburg/go-quicktime?utm_source=github.com&utm_medium=referral&utm_content=amarburg/go-quicktime&utm_campaign=badger)
 [![GoDoc](https://godoc.org/github.com/amarburg/go-quicktime?status.svg)](https://godoc.org/github.com/amarburg/go-quicktime)
 [![wercker status](https://app.wercker.com/status/6a3ea4d08d325030c0988bd0f099e563/s/master "wercker status")](https://app.wercker.com/project/byKey/6a3ea4d08d325030c0988bd0f099e563)
 
