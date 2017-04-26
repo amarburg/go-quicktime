@@ -49,6 +49,7 @@ func (stsz STSZAtom) SampleSize(sample int) int {
 	}
 
 	if sample < 1 || sample > stsz.NumSamples() {
+		// TODO.   Duh, get rid of this panix and replace it with an error message...
 		panic(fmt.Sprintf("Requested sample %d in video with %d samples", sample, stsz.NumSamples()))
 	}
 
