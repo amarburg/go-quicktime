@@ -43,8 +43,10 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig))
 
 	var offset int64 = 0
 	for offset < filesize {
-		fmt.Printf("Reading at %d\n", offset)
+		//fmt.Printf("Reading atom at %d, ", offset)
 		atom, err := ReadAtomAt(r, offset)
+
+		//fmt.Printf(" %s\n", atom.Type)
 
 		if err != nil {
 			fmt.Println(err)
