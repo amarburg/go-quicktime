@@ -55,11 +55,11 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig))
 
 		//  eagerload...
 		if config.EagerloadTypes.Includes(atom.Type) {
-			fmt.Printf("Found atom %s, eagerloading...\n", atom.Type)
+			//fmt.Printf("Found atom %s, eagerloading...\n", atom.Type)
 			err := atom.ReadData(r)
 
 			if err != nil {
-				fmt.Printf("Error while eagerloading atom \"%s\": %s\n", atom.Type, err.Error())
+				return nil, fmt.Errorf("Error while eagerloading atom \"%s\": %s\n", atom.Type, err.Error())
 			}
 		}
 
@@ -124,7 +124,7 @@ func (atom *Atom) BuildChildren() {
 			atom.Children = append(atom.Children, &hdr)
 
 		} else {
-			fmt.Println("Error parsing atom:", err.Error())
+			//fmt.Println("Error parsing atom:", err.Error())
 			break
 		}
 	}
