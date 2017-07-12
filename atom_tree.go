@@ -30,7 +30,7 @@ func (list StringList) Includes(val string) bool {
 // is passed the BuildTreeConfig.
 // Returns the top-level AtomArray.   On an error, this AtomArray will contain atoms up to the
 // error.
-func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig)) (AtomArray, error) {
+func BuildTree(r io.ReaderAt, filesize uint64, options ...func(*BuildTreeConfig)) (AtomArray, error) {
 
 	// Call configuration Functions
 	config := BuildTreeConfig{}
@@ -41,11 +41,12 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig))
 	root := make([]*Atom, 0)
 	var err error = nil
 
-	var offset int64 = 0
+	var offset uint64 = 0
 	for offset < filesize {
 		//fmt.Printf("Reading atom at %d, ", offset)
 		atom, err := ReadAtomAt(r, offset)
 
+		//fmt.Printf("sz %d; ", atom.Size)
 		//fmt.Printf(" %s\n", atom.Type)
 
 		if err != nil {
@@ -72,7 +73,7 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig))
 		}
 
 		root = append(root, &atom)
-		offset += int64(atom.Size)
+		offset += atom.Size
 
 	}
 	return root, err
@@ -80,8 +81,8 @@ func BuildTree(r io.ReaderAt, filesize int64, options ...func(*BuildTreeConfig))
 
 // ReadChildren adds children to an Atom by reading from a ReaderAt.
 func (atom *Atom) ReadChildren(r io.ReaderAt) {
-	var offset int64 = atom.HeaderLength()
-	for offset < int64(atom.Size) {
+	var offset uint64 = atom.HeaderLength()
+	for offset < uint64(atom.Size) {
 		loc := atom.Offset + offset
 		//fmt.Println("Looking for header at:",loc)
 		hdr, err := ReadAtomAt(r, loc)
@@ -95,7 +96,7 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 			hdr.ReadChildren(r)
 		}
 
-		offset += int64(hdr.Size)
+		offset += uint64(hdr.Size)
 
 		atom.Children = append(atom.Children, &hdr)
 
@@ -106,20 +107,20 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 // If the Atom already has children, behavior is undetermined.
 func (atom *Atom) BuildChildren() {
 
-	var offset int64 = 0
-	for offset+atom.HeaderLength() < int64(atom.Size) {
+	var offset uint64 = 0
+	for offset+atom.HeaderLength() < uint64(atom.Size) {
 		//fmt.Println("Looking for header at:", offset)
 		hdr, err := ParseAtom(atom.Data[offset : offset+atom.HeaderLength()])
 
 		if err == nil {
 			//fmt.Printf("BuildChildren: Found header at %d: %s\n", offset, hdr.Type)
-			hdr.Data = atom.Data[offset+atom.HeaderLength() : offset+int64(hdr.Size)]
+			hdr.Data = atom.Data[offset+atom.HeaderLength() : offset+uint64(hdr.Size)]
 
 			if hdr.IsContainer() {
 				hdr.BuildChildren()
 			}
 
-			offset += int64(hdr.Size)
+			offset += uint64(hdr.Size)
 
 			atom.Children = append(atom.Children, &hdr)
 

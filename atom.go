@@ -15,9 +15,9 @@ const ExtendedHeaderLength = 16
 // If read from an io.ReaderAt it will also store the offset of the atom within the file
 // (see ReadAtomAt)
 type Atom struct {
-	Offset   int64
-	Size     int64
-	DataSize int64
+	Offset   uint64
+	Size     uint64
+	DataSize uint64
 	Type     string
 	IsExt    bool
 
@@ -25,7 +25,7 @@ type Atom struct {
 	Data     []byte `json:"-"`
 }
 
-func (header *Atom) HeaderLength() int64 {
+func (header *Atom) HeaderLength() uint64 {
 	if header.IsExt {
 		return ExtendedHeaderLength
 	} else {
@@ -59,12 +59,12 @@ func ParseAtom(buffer []byte) (Atom, error) {
 		Type:  string(buffer[4:8])}
 
 	// Read atom size
-	var size32 int32
+	var size32 uint32
 	if err := binary.Read(bytes.NewReader(buffer), binary.BigEndian, &size32); err != nil {
 		return Atom{}, err
 	}
 
-	atom.Size = int64(size32)
+	atom.Size = uint64(size32)
 
 	if atom.Size == 0 {
 		return atom, errors.New("Zero size not supported yet")
@@ -78,7 +78,7 @@ func ParseAtom(buffer []byte) (Atom, error) {
 
 		atom.IsExt = true
 
-		var size64 int64
+		var size64 uint64
 		if err := binary.Read(bytes.NewReader(buffer[8:]), binary.BigEndian, &size64); err != nil {
 			return atom, err
 		}
@@ -91,9 +91,9 @@ func ParseAtom(buffer []byte) (Atom, error) {
 }
 
 // ReadAtom reads the atom header from an io.ReaderAt and produces an Atom.
-func ReadAtomAt(r io.ReaderAt, offset int64) (Atom, error) {
+func ReadAtomAt(r io.ReaderAt, offset uint64) (Atom, error) {
 	header_buf := make([]byte, ExtendedHeaderLength)
-	n, err := r.ReadAt(header_buf, offset)
+	n, err := r.ReadAt(header_buf, int64(offset))
 
 	if err != nil {
 		fmt.Printf("Error reading atom at %d: %s\n", offset, err.Error())
@@ -119,10 +119,10 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 
 	buf := make([]byte, atom.DataSize)
 	dataOffset := atom.Offset + atom.HeaderLength()
-	n, err := r.ReadAt(buf, dataOffset)
+	n, err := r.ReadAt(buf, int64(dataOffset))
 	if err != nil && err.Error() != "EOF" {
 		return err
-	} else if int64(n) != atom.DataSize {
+	} else if uint64(n) != atom.DataSize {
 		return errors.New(fmt.Sprintf("Read incorrect number of bytes while getting Atom data %d != %d", n, atom.DataSize))
 	}
 	atom.Data = buf
@@ -139,7 +139,7 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 // If the Atom has children, it will set the data for the Children (recursively).
 func (atom *Atom) SetData(buf []byte) {
 	// TODO.   Check buf is atom.Size
-	if int64(len(buf)) < atom.Size {
+	if uint64(len(buf)) < atom.Size {
 		return
 	}
 
