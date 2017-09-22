@@ -6,7 +6,8 @@ import "errors"
 import "io"
 import "fmt"
 
-// AtomHeaderLength is the length of a standard Atom header in bytes: a 4 byte atom size, and a 4 byte atom type.
+// AtomHeaderLength is the length of a standard Atom header in bytes:
+// a 4 byte atom size, and a 4 byte atom type.
 const AtomHeaderLength = 8
 const ExtendedHeaderLength = 16
 
@@ -93,7 +94,12 @@ func ParseAtom(buffer []byte) (Atom, error) {
 // ReadAtom reads the atom header from an io.ReaderAt and produces an Atom.
 func ReadAtomAt(r io.ReaderAt, offset uint64) (Atom, error) {
 	header_buf := make([]byte, ExtendedHeaderLength)
+
+	//fmt.Printf("Reading %d header bytes at offset %d\n", ExtendedHeaderLength, offset)
+	//startTime := time.Now()
 	n, err := r.ReadAt(header_buf, int64(offset))
+
+	//fmt.Printf("HTTP read took %d\n", time.Since(startTime) )
 
 	if err != nil {
 		fmt.Printf("Error reading atom at %d: %s\n", offset, err.Error())
@@ -101,7 +107,7 @@ func ReadAtomAt(r io.ReaderAt, offset uint64) (Atom, error) {
 	}
 
 	if n != ExtendedHeaderLength {
-		return Atom{}, errors.New(fmt.Sprintf("Couldn't read ExtendedHeaderLength bytes at offset %d, read %d bytes", offset, n))
+		return Atom{}, errors.New(fmt.Sprintf("Couldn't read ExtendedHeaderLength bytes (%d) at offset %d, read %d bytes", ExtendedHeaderLength, offset, n))
 	}
 
 	atom, err := ParseAtom(header_buf)
@@ -110,25 +116,29 @@ func ReadAtomAt(r io.ReaderAt, offset uint64) (Atom, error) {
 }
 
 // ReadData populates the Atom's Data member from the reader.   Assumes it is the same reader
-// used to populated the original Atom.
+// used to populate the original Atom.
 // If Atom.Children is set, it also sets the Data for its children (recursively).
 func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 	if atom.HasData() {
 		return nil
 	}
 
-	buf := make([]byte, atom.DataSize)
+	atom.Data = make([]byte, atom.DataSize)
 	dataOffset := atom.Offset + atom.HeaderLength()
-	n, err := r.ReadAt(buf, int64(dataOffset))
+
+	//fmt.Printf("Reading %d data bytes at offset %d\n", atom.DataSize, dataOffset)
+	//startTime := time.Now()
+	n, err := r.ReadAt(atom.Data, int64(dataOffset))
+	//fmt.Printf("HTTP read took %d\n", time.Since(startTime) )
+
 	if err != nil && err.Error() != "EOF" {
 		return err
 	} else if uint64(n) != atom.DataSize {
 		return errors.New(fmt.Sprintf("Read incorrect number of bytes while getting Atom data %d != %d", n, atom.DataSize))
 	}
-	atom.Data = buf
 
 	for _, child := range atom.Children {
-		child.SetData(buf[child.Offset-dataOffset:])
+		child.SetData(atom.Data[child.Offset-dataOffset:])
 	}
 
 	return nil
