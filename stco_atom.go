@@ -5,13 +5,15 @@ import "encoding/binary"
 import "errors"
 import "fmt"
 
-// I just cast everything to a CO64 atom for in-memory representation
+// A CO64Atom is a table of 64bit chunk offsets
+// For simplicity, I internally convert STCO atoms to CO64, rather than
+// duplicating functionality
 type CO64Atom struct {
 	Atom         *Atom
 	ChunkOffsets []int64
 }
 
-// Also handle CO64
+// ParseSTCO converts a generic "stco" or "co64" atom to a CO64Atom struct
 func ParseSTCO(atom *Atom) (CO64Atom, error) {
 
 	if !atom.HasData() {
@@ -21,18 +23,18 @@ func ParseSTCO(atom *Atom) (CO64Atom, error) {
 	// TODO:  Fix the DRY
 	if atom.Type == "stco" {
 
-		num_entries := Uint32Decode(atom.Data[4:8])
+		numEntries := uint32Decode(atom.Data[4:8])
 
-		int32Offsets := make([]int32, num_entries)
+		int32Offsets := make([]int32, numEntries)
 		buf := bytes.NewBuffer(atom.Data[8:])
 		binary.Read(buf, binary.BigEndian, &int32Offsets)
 
 		stco := CO64Atom{Atom: atom,
-			ChunkOffsets: make([]int64, num_entries)}
+			ChunkOffsets: make([]int64, numEntries)}
 
 		// Copy the int32s to int64s
 		// TODO:  I'm sure this isn't idiomatic
-		for i := 0; i < int(num_entries); i++ {
+		for i := 0; i < int(numEntries); i++ {
 			stco.ChunkOffsets[i] = int64(int32Offsets[i])
 		}
 
@@ -40,8 +42,7 @@ func ParseSTCO(atom *Atom) (CO64Atom, error) {
 
 	} else if atom.Type == "co64" {
 
-		numEntries := Uint32Decode(atom.Data[4:8])
-		//fmt.Printf("co64 has %d entries\n", numEntries )
+		numEntries := uint32Decode(atom.Data[4:8])
 
 		stco := CO64Atom{Atom: atom,
 			ChunkOffsets: make([]int64, numEntries, numEntries)}
@@ -62,7 +63,8 @@ func ParseSTCO(atom *Atom) (CO64Atom, error) {
 	}
 }
 
-// Remember that chunks are 1-base
+// ChunkOffset gives the offset for a given chunk (remember that chunks are
+// enumerated base-1)
 func (stco CO64Atom) ChunkOffset(chunk int) int64 {
 	if chunk < 1 || chunk > len(stco.ChunkOffsets) {
 		panic(fmt.Sprintf("Requested chunk %d in file with %d chunks", chunk, len(stco.ChunkOffsets)))

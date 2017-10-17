@@ -3,26 +3,10 @@ package quicktime
 import "io"
 import "fmt"
 
-// AtomArray is used to store the topmost level when building the atom tree ... there is no master top-level Atom in Quicktime.
-type AtomArray []*Atom
-
-// StringList stores a slice of Strings for BuildTreeConfig
-type StringList []string
-
 // BuildTreeConfig stores parameters for the BuildTree function.
 type BuildTreeConfig struct {
 	// List of Atom types which should be eager-loaded while building the tree.
 	EagerloadTypes StringList
-}
-
-// Tests if a string occurs in a StringList.
-func (list StringList) Includes(val string) bool {
-	for _, str := range list {
-		if str == val {
-			return true
-		}
-	}
-	return false
 }
 
 // BuildTree builds a tree of Atoms from an io.ReaderAt.   Rather than check for EOF, requires
@@ -38,10 +22,10 @@ func BuildTree(r io.ReaderAt, filesize uint64, options ...func(*BuildTreeConfig)
 		opt(&config)
 	}
 
-	root := make([]*Atom, 0)
-	var err error = nil
+	var root AtomArray
+	var err error
 
-	var offset uint64 = 0
+	var offset uint64
 	for offset < filesize {
 		//fmt.Printf("Reading atom at %d, ", offset)
 		atom, err := ReadAtomAt(r, offset)
@@ -55,7 +39,7 @@ func BuildTree(r io.ReaderAt, filesize uint64, options ...func(*BuildTreeConfig)
 		}
 
 		//  eagerload...
-		if config.EagerloadTypes.Includes(atom.Type) {
+		if config.EagerloadTypes.includes(atom.Type) {
 			//fmt.Printf("Found atom %s, eagerloading...\n", atom.Type)
 			err := atom.ReadData(r)
 
@@ -81,7 +65,7 @@ func BuildTree(r io.ReaderAt, filesize uint64, options ...func(*BuildTreeConfig)
 
 // ReadChildren adds children to an Atom by reading from a ReaderAt.
 func (atom *Atom) ReadChildren(r io.ReaderAt) {
-	var offset uint64 = atom.HeaderLength()
+	offset := atom.HeaderLength()
 	for offset < uint64(atom.Size) {
 		loc := atom.Offset + offset
 		//fmt.Println("Looking for header at:",loc)
@@ -107,7 +91,7 @@ func (atom *Atom) ReadChildren(r io.ReaderAt) {
 // If the Atom already has children, behavior is undetermined.
 func (atom *Atom) BuildChildren() {
 
-	var offset uint64 = 0
+	var offset uint64
 	for offset+atom.HeaderLength() < uint64(atom.Size) {
 		//fmt.Println("Looking for header at:", offset)
 		hdr, err := ParseAtom(atom.Data[offset : offset+atom.HeaderLength()])

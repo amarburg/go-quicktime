@@ -5,19 +5,19 @@ import "encoding/binary"
 import "errors"
 import "math"
 
-//import "fmt"
-
-type STSCEntry struct {
+type stscEntry struct {
 	FirstChunk      int32
 	SamplesPerChunk int32
-	SampleId        int32
+	SampleID        int32
 }
 
+// A STSCAtom stores a table of samples per chunk
 type STSCAtom struct {
 	Atom    *Atom
-	Entries []STSCEntry
+	Entries []stscEntry
 }
 
+// ParseSTSC converts a generic "stsc" Atom to a STSCAtom
 func ParseSTSC(atom *Atom) (STSCAtom, error) {
 	if atom.Type != "stsc" {
 		return STSCAtom{}, errors.New("Not an STSC atom")
@@ -27,11 +27,11 @@ func ParseSTSC(atom *Atom) (STSCAtom, error) {
 		return STSCAtom{}, errors.New("STSC atom doesn't have data")
 	}
 
-	num_entries := Int32Decode(atom.Data[4:8])
+	numEntries := int32Decode(atom.Data[4:8])
 	stsc := STSCAtom{Atom: atom,
-		Entries: make([]STSCEntry, num_entries)}
+		Entries: make([]stscEntry, numEntries)}
 
-	if num_entries > 0 {
+	if numEntries > 0 {
 		buf := bytes.NewBuffer(atom.Data[8:])
 		binary.Read(buf, binary.BigEndian, &stsc.Entries)
 	}
@@ -39,8 +39,9 @@ func ParseSTSC(atom *Atom) (STSCAtom, error) {
 	return stsc, nil
 }
 
-// Remember that chunks and samples are 1-based
-func (stsc STSCAtom) SampleChunk(s int) (chunk int, chunk_start int, offset int, err error) {
+// SampleChunk converts a sample number to a chunk, chunk offset,
+// and offset with the chunk
+func (stsc STSCAtom) SampleChunk(s int) (chunk int, chunkStart int, offset int, err error) {
 
 	// Convert to base zero
 	s--
@@ -70,28 +71,28 @@ func (stsc STSCAtom) SampleChunk(s int) (chunk int, chunk_start int, offset int,
 
 	sample := int32(s)
 
-	last_chunk := stsc.Entries[len(stsc.Entries)-1].FirstChunk
-	samples_per_chunk := stsc.Entries[0].SamplesPerChunk
-	next_entry := 0
+	lastChunk := stsc.Entries[len(stsc.Entries)-1].FirstChunk
+	samplesPerChunk := stsc.Entries[0].SamplesPerChunk
+	nextEntry := 0
 	accum := int32(0)
 
-	for i := int32(0); i <= last_chunk; i++ {
-		if i == stsc.Entries[next_entry].FirstChunk {
-			samples_per_chunk = stsc.Entries[next_entry].SamplesPerChunk
-			next_entry++
+	for i := int32(0); i <= lastChunk; i++ {
+		if i == stsc.Entries[nextEntry].FirstChunk {
+			samplesPerChunk = stsc.Entries[nextEntry].SamplesPerChunk
+			nextEntry++
 		}
 
-		if samples_per_chunk > (sample) {
+		if samplesPerChunk > (sample) {
 			return int(i + 1), int(accum + 1), int(sample + 1), nil
 		}
 
-		sample -= samples_per_chunk
-		accum += samples_per_chunk
+		sample -= samplesPerChunk
+		accum += samplesPerChunk
 	}
 
 	// If you get here, you're on the last chunk
-	chunk = int(last_chunk) + int(math.Floor(float64(sample)/float64(samples_per_chunk)))
-	offset = int(math.Remainder(float64(sample), float64(samples_per_chunk)))
+	chunk = int(lastChunk) + int(math.Floor(float64(sample)/float64(samplesPerChunk)))
+	offset = int(math.Remainder(float64(sample), float64(samplesPerChunk)))
 
 	// Convert back to base one
 	chunk++

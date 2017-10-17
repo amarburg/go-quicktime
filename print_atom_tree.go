@@ -2,6 +2,7 @@ package quicktime
 
 import "fmt"
 
+// DumpTree iterates over an AtomArray and prints each atom on a line
 func DumpTree(tree AtomArray) {
 	fmt.Println(" (* = has loaded contents)")
 	indent := 0
@@ -10,6 +11,8 @@ func DumpTree(tree AtomArray) {
 	}
 }
 
+// PrintAtom writes a short descriptive string for each Atom in an AtomArray
+// to do this, it must parse the atom
 func PrintAtom(atom *Atom, indent int) {
 
 	for i := 0; i < indent; i++ {
@@ -42,7 +45,7 @@ func PrintAtom(atom *Atom, indent int) {
 
 			fmt.Printf(" (%d entries): ", len(stsz.Entries))
 			for _, e := range stsz.Entries {
-				fmt.Printf(" (%d,%d,%d) ", e.FirstChunk, e.SamplesPerChunk, e.SampleId)
+				fmt.Printf(" (%d,%d,%d) ", e.FirstChunk, e.SamplesPerChunk, e.SampleID)
 			}
 		case "tkhd":
 			tkhd, _ := ParseTKHD(atom)

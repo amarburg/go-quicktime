@@ -1,42 +1,37 @@
 package quicktime
 
-func (atom Atom) FindAtom(type_str string) *Atom {
-	//fmt.Println(atom.Type,"atom has", len(atom.Children),"children when looking for", type_str)
-	for _, child := range atom.Children {
-		//fmt.Println("Comparing",atom.Type,"to",type_str)
-		if child.IsType(type_str) {
+// FindAtom looks through an Atom's children for a given type,
+// returning the first instance or nil of not found
+func (atom Atom) FindAtom(typeStr string) *Atom {
+	return atom.Children.FindAtom(typeStr)
+}
+
+// FindAtoms looks through an Atom's children for a given type,
+// returning an array of all instances.  The array will be empty
+// if not found.
+func (atom Atom) FindAtoms(typeStr string) (out []*Atom) {
+	return atom.Children.FindAtoms(typeStr)
+}
+
+// FindAtom looks through an AtomArray for a given type,
+// returning the first instance or nil of not found
+func (atoms AtomArray) FindAtom(typeStr string) *Atom {
+	for _, child := range atoms {
+		if child.IsType(typeStr) {
 			return child
 		}
 	}
 	return nil
 }
 
-func (atom Atom) FindAtoms(type_str string) (out []*Atom) {
-	out = make([]*Atom, 0)
-
-	for _, child := range atom.Children {
-		if child.IsType(type_str) {
-			//fmt.Println("Found atom",child.Type,"we were looking for at", child)
-			out = append(out, child)
-		}
-	}
-	return out
-}
-
-func (atoms AtomArray) FindAtom(type_str string) *Atom {
-	for _, child := range atoms {
-		if child.IsType(type_str) {
-			return child
-		}
-	}
-	return nil
-}
-
-func (atoms AtomArray) FindAtoms(type_str string) []*Atom {
-	out := make([]*Atom, 0)
+// FindAtoms looks through an AtomArray for a given type,
+// returning an array of all instances.  The array will be empty
+// if not found.
+func (atoms AtomArray) FindAtoms(typeStr string) AtomArray {
+	var out AtomArray
 
 	for _, child := range atoms {
-		if child.IsType(type_str) {
+		if child.IsType(typeStr) {
 			out = append(out, child)
 		}
 	}

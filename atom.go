@@ -9,7 +9,15 @@ import "fmt"
 // AtomHeaderLength is the length of a standard Atom header in bytes:
 // a 4 byte atom size, and a 4 byte atom type.
 const AtomHeaderLength = 8
+
+// ExtendedHeaderLength is the length of an extended Quicktime Header:
+// 4 bytes of size == 1 for extended headers
+// 4 bytes of atom type
+// 8 bytes of extended size
 const ExtendedHeaderLength = 16
+
+// AtomArray is used to store the topmost level when building the atom tree ... there is no master top-level Atom in Quicktime.
+type AtomArray []*Atom
 
 // The Atom struct stores a generic (not-decoded) Atom, including its type,
 // size and optionally its Children and Data as a slice of the original byte buffer.
@@ -22,21 +30,25 @@ type Atom struct {
 	Type     string
 	IsExt    bool
 
-	Children []*Atom
+	Children AtomArray
 	Data     []byte `json:"-"`
 }
 
-func (header *Atom) HeaderLength() uint64 {
-	if header.IsExt {
+// HeaderLength returns the number of bytes in the header, depending on whether
+// the header is extended or not.
+func (atom *Atom) HeaderLength() uint64 {
+	if atom.IsExt {
 		return ExtendedHeaderLength
-	} else {
-		return AtomHeaderLength
 	}
+
+	return AtomHeaderLength
 }
 
-// IsContainer returns true if a given atom type is a container, rather than a leaf.  This is done using a switch ... if I've missed an atom, send me a pull request!
-func (header *Atom) IsContainer() bool {
-	switch header.Type {
+// IsContainer returns true if a given atom type is a container, rather
+// than a leaf.  This is done using a switch ... if I've missed an atom,
+// send me a pull request!
+func (atom *Atom) IsContainer() bool {
+	switch atom.Type {
 	case "moov", "trak", "mdia", "minf", "stbl", "dinf":
 		return true
 	}
@@ -44,8 +56,8 @@ func (header *Atom) IsContainer() bool {
 }
 
 // IsType returns true if the Atom's type matches the argument.
-func (header Atom) IsType(type_str string) bool {
-	return header.Type == type_str
+func (atom Atom) IsType(typeStr string) bool {
+	return atom.Type == typeStr
 }
 
 // ParseAtom reads the first 8 bytes of the buffer and returns the appropriate Atom.
@@ -91,13 +103,13 @@ func ParseAtom(buffer []byte) (Atom, error) {
 	return atom, nil
 }
 
-// ReadAtom reads the atom header from an io.ReaderAt and produces an Atom.
+// ReadAtomAt reads the atom header from an io.ReaderAt and produces an Atom.
 func ReadAtomAt(r io.ReaderAt, offset uint64) (Atom, error) {
-	header_buf := make([]byte, ExtendedHeaderLength)
+	headerBuf := make([]byte, ExtendedHeaderLength)
 
 	//fmt.Printf("Reading %d header bytes at offset %d\n", ExtendedHeaderLength, offset)
 	//startTime := time.Now()
-	n, err := r.ReadAt(header_buf, int64(offset))
+	n, err := r.ReadAt(headerBuf, int64(offset))
 
 	//fmt.Printf("HTTP read took %d\n", time.Since(startTime) )
 
@@ -107,15 +119,15 @@ func ReadAtomAt(r io.ReaderAt, offset uint64) (Atom, error) {
 	}
 
 	if n != ExtendedHeaderLength {
-		return Atom{}, errors.New(fmt.Sprintf("Couldn't read ExtendedHeaderLength bytes (%d) at offset %d, read %d bytes", ExtendedHeaderLength, offset, n))
+		return Atom{}, fmt.Errorf("Couldn't read ExtendedHeaderLength bytes (%d) at offset %d, read %d bytes", ExtendedHeaderLength, offset, n)
 	}
 
-	atom, err := ParseAtom(header_buf)
+	atom, err := ParseAtom(headerBuf)
 	atom.Offset = offset
 	return atom, err
 }
 
-// ReadData populates the Atom's Data member from the reader.   Assumes it is the same reader
+// ReadData populates the atom's Data member from the reader.   Assumes it is the same reader
 // used to populate the original Atom.
 // If Atom.Children is set, it also sets the Data for its children (recursively).
 func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
@@ -134,7 +146,7 @@ func (atom *Atom) ReadData(r io.ReaderAt) (err error) {
 	if err != nil && err.Error() != "EOF" {
 		return err
 	} else if uint64(n) != atom.DataSize {
-		return errors.New(fmt.Sprintf("Read incorrect number of bytes while getting Atom data %d != %d", n, atom.DataSize))
+		return fmt.Errorf("Read incorrect number of bytes while getting Atom data %d != %d", n, atom.DataSize)
 	}
 
 	for _, child := range atom.Children {

@@ -2,4 +2,5 @@
 // from a Quicktime file, and reading a subset of the atoms.
 package quicktime
 
+// Version stores the version
 const Version = "v0.1.0"

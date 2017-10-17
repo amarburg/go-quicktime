@@ -2,12 +2,14 @@ package quicktime
 
 import "errors"
 
+// A FTYPAtom stores versioning information about the Atom tree
 type FTYPAtom struct {
 	Atom         *Atom
 	MajorBrand   uint32
 	MinorVersion uint32
 }
 
+// ParseFTYP converts a generic "ftyp" atom to an FTYPAtom
 func ParseFTYP(atom *Atom) (FTYPAtom, error) {
 	if atom.Type != "ftyp" {
 		return FTYPAtom{}, errors.New("Not an FTYP atom")
@@ -18,6 +20,6 @@ func ParseFTYP(atom *Atom) (FTYPAtom, error) {
 	}
 
 	return FTYPAtom{Atom: atom,
-		MajorBrand:   Uint32Decode(atom.Data[0:4]),
-		MinorVersion: Uint32Decode(atom.Data[4:8])}, nil
+		MajorBrand:   uint32Decode(atom.Data[0:4]),
+		MinorVersion: uint32Decode(atom.Data[4:8])}, nil
 }
