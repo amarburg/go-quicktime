@@ -7,6 +7,8 @@ build:
     - setup-go-workspace:
       package-dir: github.com/amarburg/go-quicktime/
 
+    # Check gofmt
+    - almogbaku/gofmt-check@0.9.1
     - wercker/golint
 
     # Gets the dependencies
