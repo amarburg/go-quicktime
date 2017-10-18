@@ -33,5 +33,5 @@ func ParseMVHD(atom *Atom) (MVHDAtom, error) {
 
 // Duration returns the movie duration stored in an MVHDAtom
 func (mvhd MVHDAtom) Duration() time.Duration {
-	return time.Duration(float32(mvhd.TimeTicks)*float32(time.Second) / float32(mvhd.TimeScale))
+	return time.Duration(float32(mvhd.TimeTicks) * float32(time.Second) / float32(mvhd.TimeScale))
 }
