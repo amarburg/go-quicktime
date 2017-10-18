@@ -1,6 +1,9 @@
 package quicktime
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // A MVHDAtom stores timing information about the movie
 type MVHDAtom struct {
@@ -29,6 +32,6 @@ func ParseMVHD(atom *Atom) (MVHDAtom, error) {
 }
 
 // Duration returns the movie duration stored in an MVHDAtom
-func (mvhd MVHDAtom) Duration() float32 {
-	return float32(mvhd.TimeTicks) / float32(mvhd.TimeScale)
+func (mvhd MVHDAtom) Duration() time.Duration {
+	return time.Duration(float32(mvhd.TimeTicks)*float32(time.Second) / float32(mvhd.TimeScale))
 }
