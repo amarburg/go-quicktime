@@ -43,7 +43,7 @@ func ParseSTBL(atom *Atom) (STBLAtom, error) {
 // quicktime file
 func (stbl STBLAtom) SampleOffset(sample int) (int64, error) {
 
-	if sample > stbl.NumFrames() {
+	if uint64(sample) > stbl.NumFrames() {
 		return 0, fmt.Errorf("Requested sample %d in file %d samples long", sample, stbl.NumFrames())
 	}
 
@@ -66,7 +66,7 @@ func (stbl STBLAtom) SampleOffset(sample int) (int64, error) {
 }
 
 // NumFrames returns the number of samples (frames) in the stbl
-func (stbl STBLAtom) NumFrames() int {
+func (stbl STBLAtom) NumFrames() uint64 {
 	// What if there's only one sample?
 	return stbl.Stsz.NumSamples()
 }

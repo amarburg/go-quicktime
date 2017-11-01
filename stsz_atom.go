@@ -41,9 +41,9 @@ func ParseSTSZ(atom *Atom) (STSZAtom, error) {
 }
 
 // NumSamples returns the number of samples in an STSZAtom
-func (stsz STSZAtom) NumSamples() int {
+func (stsz STSZAtom) NumSamples() uint64 {
 	// How do you find length if only the universal sample size is provided?
-	return len(stsz.SampleSizes)
+	return uint64(len(stsz.SampleSizes))
 }
 
 // SampleSize looks up the size of a given sample in the STSZAtom
@@ -52,7 +52,7 @@ func (stsz STSZAtom) SampleSize(sample int) int {
 		return int(stsz.SampleSze)
 	}
 
-	if sample < 1 || sample > stsz.NumSamples() {
+	if sample < 1 || uint64(sample) > stsz.NumSamples() {
 		// TODO.   Duh, get rid of this panix and replace it with an error message...
 		panic(fmt.Sprintf("Requested sample %d in video with %d samples", sample, stsz.NumSamples()))
 	}
