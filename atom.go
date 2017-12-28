@@ -49,7 +49,7 @@ func (atom *Atom) HeaderLength() uint64 {
 // send me a pull request!
 func (atom *Atom) IsContainer() bool {
 	switch atom.Type {
-	case "moov", "trak", "mdia", "minf", "stbl", "dinf":
+	case "moov", "trak", "mdia", "minf", "stbl", "dinf", "meta":
 		return true
 	}
 	return false
